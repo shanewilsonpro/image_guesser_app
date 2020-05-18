@@ -52,18 +52,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   AnimationController finishScrollController;
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
-    
+
     finishScrollController = AnimationController(
       duration: Duration(microseconds: 150),
       vsync: this,
-    )
-    ..addListener(() {
-      setState(() {
-        scrollPercent = lerpDouble(finishScrollStart, finishScrollEnd, finishScrollController.value);
+    )..addListener(() {
+        setState(() {
+          scrollPercent = lerpDouble(
+              finishScrollStart, finishScrollEnd, finishScrollController.value);
+        });
       });
-    });
   }
 
   @override
@@ -143,7 +143,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
             OutlineButton(
               padding: EdgeInsets.all(10.0),
-              onPressed: () => {},
+              onPressed: () {
+                setState(() {
+                  this.currentVehicleName =
+                      vehicleNames[(scrollPercent * 10).round()];
+                });
+              },
               child: Text(
                 'Show Answer',
                 style: TextStyle(
