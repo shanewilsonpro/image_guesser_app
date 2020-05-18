@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'image_card.dart';
 
 void main() {
   runApp(MyApp());
@@ -28,6 +29,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  List<String> vehicleNames = [
+    'bicycle',
+    'boat',
+    'car',
+    'excavator',
+    'helicopter',
+    'motorbike',
+    'plane',
+    'tractor',
+    'train',
+    'truck'
+  ];
+
   String currentVehicleName = 'vehicle name';
 
   @override
@@ -42,10 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 0),
-              child: Container(
-                height: 300,
-                color: Colors.blue,
-              ),
+              child: ImageCard(imageName: vehicleNames[0]),
             ),
             OutlineButton(
               padding: EdgeInsets.all(10.0),
