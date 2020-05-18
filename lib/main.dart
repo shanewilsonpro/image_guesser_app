@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'image_card.dart';
 
@@ -12,7 +13,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(title: 'Image Guesser'),
     );
@@ -28,8 +28,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<String> vehicleNames = [
     'bicycle',
     'boat',
@@ -43,7 +42,85 @@ class _MyHomePageState extends State<MyHomePage> {
     'truck'
   ];
 
-  String currentVehicleName = 'vehicle name';
+  String currentVehicleName = '';
+
+  double scrollPercent = 0.0;
+  Offset startDrag;
+  double startDragPercentScroll;
+  double finishScrollStart;
+  double finishScrollEnd;
+  AnimationController finishScrollController;
+
+  @override
+  void initState() { 
+    super.initState();
+    
+    finishScrollController = AnimationController(
+      duration: Duration(microseconds: 150),
+      vsync: this,
+    )
+    ..addListener(() {
+      setState(() {
+        scrollPercent = lerpDouble(finishScrollStart, finishScrollEnd, finishScrollController.value);
+      });
+    });
+  }
+
+  @override
+  dispose() {
+    finishScrollController.dispose();
+    super.dispose();
+  }
+
+  List<Widget> buildCards() {
+    List<Widget> cardsList = [];
+    for (int i = 0; i < vehicleNames.length; i++) {
+      cardsList.add(buildCard(i, scrollPercent));
+    }
+    return cardsList;
+  }
+
+  Widget buildCard(int cardIndex, double scrollPercent) {
+    final cardScrollPercent = scrollPercent / (1 / vehicleNames.length);
+
+    return FractionalTranslation(
+      translation: Offset(cardIndex - cardScrollPercent, 0.0),
+      child: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: ImageCard(imageName: vehicleNames[cardIndex]),
+      ),
+    );
+  }
+
+  onHorizontalDragStart(DragStartDetails details) {
+    startDrag = details.globalPosition;
+    startDragPercentScroll = scrollPercent;
+  }
+
+  onHorizontalDragUpdate(DragUpdateDetails details) {
+    final currentDrag = details.globalPosition;
+    final dragDistance = currentDrag.dx - startDrag.dx;
+    final singleCardDragPercent = dragDistance / context.size.width;
+
+    setState(() {
+      scrollPercent = (startDragPercentScroll +
+              (-singleCardDragPercent / vehicleNames.length))
+          .clamp(0.0, 1.0 - (1 / vehicleNames.length));
+    });
+  }
+
+  onHorizontalDragEnd(DragEndDetails details) {
+    finishScrollStart = scrollPercent;
+    finishScrollEnd =
+        (scrollPercent * vehicleNames.length).round() / vehicleNames.length;
+    finishScrollController.forward(from: 0.0);
+
+    setState(() {
+      startDrag = null;
+      startDragPercentScroll = null;
+      currentVehicleName = '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +132,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 0),
-              child: ImageCard(imageName: vehicleNames[0]),
+            GestureDetector(
+              onHorizontalDragStart: onHorizontalDragStart,
+              onHorizontalDragUpdate: onHorizontalDragUpdate,
+              onHorizontalDragEnd: onHorizontalDragEnd,
+              behavior: HitTestBehavior.translucent,
+              child: Stack(
+                children: buildCards(),
+              ),
             ),
             OutlineButton(
               padding: EdgeInsets.all(10.0),
